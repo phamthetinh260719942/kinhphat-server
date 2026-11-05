@@ -1,0 +1,21 @@
+/* CSS riêng cho cảnh Nghe pháp (ui/dharma.js) */
+.dh-text{position:fixed;z-index:5;left:50%;bottom:28px;transform:translateX(-50%);width:min(920px,94vw);text-align:center;color:#fff7dc;font-family:"Noto Serif","Times New Roman",serif;padding:18px 16px 10px;border-radius:14px;background:linear-gradient(transparent,#000a 35%);pointer-events:none}
+.dh-line{transition:opacity .4s,transform .4s;line-height:1.5;text-shadow:0 2px 6px #000}
+.dh-line.prev{opacity:.4;font-size:1.05rem}
+.dh-line.next{opacity:.5;font-size:1.05rem}
+.dh-line.cur{font-size:clamp(1.35rem,3.1vw,2.1rem);font-weight:700;margin:6px 0;color:#ffe9a8}
+.dh-meta{font-size:.75rem;opacity:.65;margin-top:6px}
+/* thanh nút nằm phía trên */
+.dh-bar{position:fixed;z-index:5;left:50%;top:60px;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;color:#f6ecd6;font-family:"Noto Serif","Times New Roman",serif;font-size:.85rem;max-width:96vw;transition:opacity .5s}
+.dh-bar button{background:#6b4423e6;color:#f6ecd6;border:1px solid #e0b85a;border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer}
+.dh-bar button.on{background:#e0b85a;color:#2b1409}
+.dh-bar input[type=range]{width:90px}
+.dh-hint{position:fixed;z-index:5;top:38%;left:50%;transform:translateX(-50%);background:#000a;color:#fff7dc;padding:6px 14px;border-radius:20px;font:13px "Noto Serif","Times New Roman",serif;pointer-events:none;text-align:center;max-width:90vw;transition:opacity .5s}
+.dh-toast{position:fixed;z-index:8;top:28%;left:50%;transform:translateX(-50%);background:#000b;color:#ffe9a8;padding:8px 20px;border-radius:20px;font:15px "Noto Serif","Times New Roman",serif;pointer-events:none}
+body.dh-on .help{display:none}
+body.ui-idle .dh-bar,body.ui-idle .dh-hint{opacity:0;pointer-events:none}
+@media(pointer:coarse){.dh-text{bottom:92px}}
+@media(max-width:700px){
+  .dh-bar{top:56px;gap:6px;font-size:.78rem}.dh-bar button{padding:6px 9px}.dh-bar input[type=range]{width:64px}
+  .dh-line.cur{font-size:1.2rem}.dh-line.prev,.dh-line.next{font-size:.9rem}
+}

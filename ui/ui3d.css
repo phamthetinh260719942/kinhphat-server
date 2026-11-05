@@ -1,0 +1,16 @@
+/* CSS riêng cho giao diện 3D (ui/ui3d.js) */
+.hud{position:fixed;z-index:4;color:#f6ecd6;font-family:"Noto Serif","Times New Roman",serif;transition:opacity .5s}
+.hud button{background:#6b4423cc;color:#f6ecd6;border:1px solid #e0b85a;border-radius:8px;padding:6px 11px;font:inherit;cursor:pointer}
+.hud a{color:#e0b85a;cursor:pointer;text-decoration:underline}
+.crumbs3d{left:14px;top:12px;font-size:15px;text-shadow:0 1px 4px #000;display:flex;gap:8px;align-items:center;flex-wrap:nowrap;max-width:62vw;overflow:hidden}
+.crumbs3d a{white-space:nowrap}.crumbs3d b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.musbox{right:14px;top:12px;display:flex;gap:6px;align-items:center}
+#tip{position:fixed;z-index:6;background:#000c;color:#fff;padding:4px 8px;border-radius:5px;font:13px "Noto Serif","Times New Roman";pointer-events:none;display:none;max-width:260px}
+#ov{position:fixed;inset:0;z-index:7;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#000a;color:#f6ecd6;font:18px "Noto Serif","Times New Roman";text-align:center;padding:20px}
+/* 4 nút di chuyển trên điện thoại: ◀ ▲ ▼ ▶ (◀ ▶ là xoay người) */
+.mv{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:4;display:none;gap:10px;transition:opacity .5s}
+.mv button{width:58px;height:58px;font-size:22px;background:#6b4423dd;color:#f6ecd6;border:1px solid #e0b85a;border-radius:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+@media(pointer:coarse){.mv{display:flex}}
+@media(max-width:700px){.crumbs3d a{display:none}.musbox span,.musbox input{display:none}}
+/* 5 giây không thao tác thì ẩn nút; chạm hoặc lướt lại là hiện */
+body.ui-idle .hud,body.ui-idle .mv{opacity:0;pointer-events:none}
