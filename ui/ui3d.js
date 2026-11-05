@@ -126,7 +126,7 @@ function initScene() {
   const el = renderer.domElement;
   el.onpointerdown = e => { drag = { x: e.clientX, y: e.clientY, moved: 0 }; el.setPointerCapture(e.pointerId); };
   el.onpointermove = e => {
-    if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy); drag.x = e.clientX; drag.y = e.clientY; if (e.pointerType !== 'touch') { yaw -= dx * .004; pitch = Math.max(-1.2, Math.min(1.2, pitch - dy * .004)); } }
+    if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy); drag.x = e.clientX; drag.y = e.clientY; const k = e.pointerType === 'touch' ? .006 : .004; yaw -= dx * k; pitch = Math.max(-1.2, Math.min(1.2, pitch - dy * k)); }
     else if (e.pointerType === 'mouse' && !Dharma.active) hover(pick(e), e);
   };
   el.onpointerup = e => { if (drag && drag.moved < 6 && !Dharma.active) { const m = pick(e); if (m) { hover(null); app.open(m.userData.book); } } drag = null; };
@@ -142,7 +142,7 @@ function initHud() {
   const hold = (txt, k) => { const b = h('button', { textContent: txt, oncontextmenu: e => e.preventDefault() });
     b.onpointerdown = e => { e.preventDefault(); e.stopPropagation(); keys[k] = true; b.setPointerCapture?.(e.pointerId); };
     b.onpointerup = b.onpointercancel = b.onlostpointercapture = () => { keys[k] = false; }; return b; };
-  const mv = h('div', { className: 'mv' }, hold('◀', 'tl'), hold('▲', 'up'), hold('▼', 'down'), hold('▶', 'tr'));
+  const mv = h('div', { className: 'mv' }, hold('◀', 'a'), hold('▲', 'up'), hold('▼', 'down'), hold('▶', 'd'));
   const help = h('div', { className: 'hud help', style: 'left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;opacity:.75;text-align:center;pointer-events:none', textContent: matchMedia('(pointer:coarse)').matches ? 'Dùng 4 nút bên dưới để đi · chạm vào cuốn kinh để đọc' : 'Kéo để nhìn · W A S D / mũi tên để đi · bấm vào cuốn kinh để đọc' });
   document.body.append(tip, ov, crumbsEl, mus, mv, help);
   let idleT = 0; const wake = () => { document.body.classList.remove('ui-idle'); clearTimeout(idleT); idleT = setTimeout(sleepUI, 5000); };
