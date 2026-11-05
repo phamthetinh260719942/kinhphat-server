@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: thu-vien-kinh
+    runtime: static
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /b/*
+        destination: https://budsas.net/*
