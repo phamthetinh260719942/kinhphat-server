@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Bộ sưu tập riêng của Thư Viện Kinh (không đụng tới dữ liệu khác). Mỗi người chỉ đọc/ghi dữ liệu của chính mình
+    match /kinhphat_users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /books/{bookId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['title', 'url', 'idx', 'total', 'updatedAt', 'done'])
+          && request.resource.data.title is string && request.resource.data.title.size() < 300
+          && request.resource.data.url is string && request.resource.data.url.size() < 400
+          && request.resource.data.idx is int && request.resource.data.total is int
+          && request.resource.data.updatedAt is number && request.resource.data.done is bool;
+      }
+    }
+  }
+}
