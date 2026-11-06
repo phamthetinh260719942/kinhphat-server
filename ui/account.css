@@ -1,0 +1,24 @@
+/* CSS riêng cho tài khoản và danh sách sách đã đọc (ui/account.js) */
+.acc-btn.fixed{position:fixed;top:12px;right:12px;z-index:5}
+.acc-btn.on{box-shadow:0 0 0 2px #7bd88f}
+.acc-chip{position:fixed;z-index:4;top:56px;left:14px;max-width:84vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#e0b85a!important;color:#2b1409!important;font-weight:700;font-family:"Noto Serif","Times New Roman",serif;display:none;transition:opacity .5s}
+body.dh-on .acc-chip{display:none!important}
+body.ui-idle .acc-chip{opacity:0;pointer-events:none}
+.acc-ov{position:fixed;inset:0;z-index:8;background:#000a;display:none;align-items:center;justify-content:center;padding:14px}
+.acc-ov.on{display:flex}
+.acc-box{width:min(460px,100%);max-height:90vh;overflow:auto;background:#2b1a0e;color:#f6ecd6;border:1px solid #e0b85a;border-radius:14px;padding:16px;font-family:"Noto Serif","Times New Roman",serif}
+.acc-box h3{margin:0 0 10px;color:#e0b85a}
+.acc-box input{display:block;width:100%;margin:8px 0;padding:10px;border-radius:8px;border:1px solid #8a6a3a;background:#1b1008;color:#fff;font:inherit;box-sizing:border-box}
+.acc-box button{background:#6b4423;color:#f6ecd6;border:1px solid #e0b85a;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+.acc-box button.on{background:#e0b85a;color:#2b1409}
+.acc-box button:disabled{opacity:.6}
+.acc-tabs{display:flex;gap:8px;margin-bottom:6px}
+.acc-go{width:100%;margin-top:6px}
+.acc-err{color:#ff9d8a;min-height:1.2em;font-size:.9rem}
+.acc-note{font-size:.85rem;opacity:.75;margin:8px 0}
+.acc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.acc-row{border-top:1px solid #5a3f22;padding:10px 0}
+.acc-t{font-weight:700}
+.acc-bar{height:6px;background:#4a331c;border-radius:3px;margin:6px 0}
+.acc-bar i{display:block;height:100%;background:#e0b85a;border-radius:3px}
+.acc-s{font-size:.82rem;opacity:.8;margin-bottom:6px}
