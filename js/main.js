@@ -1,18 +1,20 @@
-// Điều phối: dữ liệu + TTS + nhạc. Giao diện nằm ở ui/. Muốn bản 3D: đổi dòng import UI bên dưới.
-import { UI } from '../ui/ui3d.js';          // <- đổi lại '../ui/ui2d.js' nếu muốn bản 2D
+// Điều phối: dữ liệu + TTS + nhạc + tiến độ + tài khoản. Giao diện nằm ở ui/. Đổi UI bằng dòng import bên dưới.
+import { UI } from '../ui/ui3d.js';          // <- đổi thành '../ui/ui2d.js' nếu muốn bản 2D
+import { Account } from '../ui/account.js';
 import { ORIGIN, fetchDoc, parseHome, parsePage } from './data.js';
 import { tts } from './tts.js';
 import { music } from './music.js';
+import { Progress } from './progress.js';
 
 const HOME = ORIGIN + '/uni/index.htm';
 const stack = [];                              // {kind:'home'|'shelf'|'read', title, data}
-const posKey = u => 'pos:' + u;
 
 function show(e) {
   const crumbs = stack.map(s => s.title);
   if (e.kind === 'home') UI.showHome(e.data, crumbs);
   else if (e.kind === 'shelf') UI.showShelf(e.data, crumbs);
-  else UI.showReader(e.data, crumbs, +localStorage.getItem(posKey(e.data.url)) || 0);
+  else UI.showReader(e.data, crumbs, Progress.idx(e.data.url));
+  Account.refresh(e.kind);
 }
 const app = {
   tts, music,
@@ -30,15 +32,18 @@ const app = {
       const p = parsePage(await fetchDoc(book.url), book.url);
       p.title = book.title || p.title;
       const e = { kind: p.kind === 'index' ? 'shelf' : 'read', title: p.title, data: p };
-      if (e.kind === 'read') tts.load(p.paras);
+      if (e.kind === 'read') { tts.load(p.paras); Progress.update(p, Progress.idx(p.url), p.paras.length); }   // vào danh sách "đang đọc"
       stack.push(e); show(e);
     } catch (e) { UI.error(e.message, true); }
   },
   back() { if (stack.length < 2) return; tts.stop(); stack.pop(); show(stack.at(-1)); },
   jump(n) { while (stack.length > n + 1) stack.pop(); tts.stop(); show(stack.at(-1)); }
 };
-tts.onPara = i => { UI.setReading(i); const e = stack.at(-1); if (e?.kind === 'read') localStorage.setItem(posKey(e.data.url), i); };
-tts.onState = s => { UI.setTtsState(s); music.duck(s === 'playing'); };
+tts.onPara = i => {
+  UI.setReading(i); const e = stack.at(-1);
+  if (e?.kind === 'read') Progress.update(e.data, i, e.data.paras.length);
+};
+tts.onState = s => { UI.setTtsState(s); music.duck(s === 'playing'); if (s !== 'playing') Progress.flush(); };
 music.onChange = () => UI.setMusic(music.name, music.playing);
 
-UI.init(app); music.init(); app.home();
+UI.init(app); music.init(); Account.mount(app); app.home();

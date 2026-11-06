@@ -1,5 +1,6 @@
 // Đọc bằng giọng trình duyệt; nếu máy không có giọng tiếng Việt thì dùng giọng Google Dịch (không chính thức).
-let voice = null, token = 0, warned = false;
+import { SERVER_URL } from './config.js';
+let voice = null, token = 0, warned = false, srcIdx = 0;   // srcIdx 0 = server của mình, 1 = Google trực tiếp (dự phòng)
 const pick = () => { voice = speechSynthesis.getVoices().find(v => /^vi/i.test(v.lang)) || null; };
 speechSynthesis.onvoiceschanged = pick; pick();
 const ra = new Audio();
@@ -37,9 +38,12 @@ export const tts = {
           u.onend = () => run(k + 1); u.onerror = e => { if (e.error !== 'canceled' && e.error !== 'interrupted') run(k + 1); };
           speechSynthesis.speak(u);
         } else {
-          ra.onended = () => run(k + 1); ra.onerror = () => { console.warn('Google TTS lỗi', ra.error?.code, ra.error?.message, ra.src); this._fail(my); };
-          ra.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cs[k])}&tl=vi&client=tw-ob`;
-          ra.defaultPlaybackRate = ra.playbackRate = this.rate; ra.play().catch(e => { console.warn('Google TTS play() lỗi', e); this._fail(my); });
+          const q = encodeURIComponent(cs[k]); let done = false, to = 0;
+          const fail = () => { if (done) return; done = true; clearTimeout(to); if (my !== token) return; if (srcIdx < 1) { srcIdx++; run(k); } else this._fail(my); };
+          to = setTimeout(fail, srcIdx === 0 ? 8000 : 15000);          // server đang "ngủ" hoặc chậm: chuyển sang nguồn dự phòng
+          ra.onended = () => { done = true; clearTimeout(to); run(k + 1); }; ra.oncanplay = () => clearTimeout(to); ra.onerror = fail;
+          ra.src = srcIdx === 0 ? `${SERVER_URL}/tts?q=${q}&lang=vi` : `https://translate.google.com/translate_tts?ie=UTF-8&q=${q}&tl=vi&client=tw-ob`;
+          ra.defaultPlaybackRate = ra.playbackRate = this.rate; ra.play().catch(fail);
         }
       };
       run(0);
