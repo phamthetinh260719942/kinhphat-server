@@ -9,7 +9,13 @@ import { Progress } from './progress.js';
 const HOME = ORIGIN + '/uni/index.htm';
 const stack = [];                              // {kind:'home'|'shelf'|'read', title, data}
 
+function mark(e) {                            // gắn trạng thái đã/đang đọc cho từng sách để vẽ quầng sáng
+  const st = new Map(Progress.list().map(p => [p.url, p.done ? 'done' : 'reading']));
+  const books = e.kind === 'home' ? e.data.flatMap(s => s.books) : e.kind === 'shelf' ? e.data.books : [];
+  books.forEach(b => { b.state = st.get(b.url) || ''; });
+}
 function show(e) {
+  mark(e);
   const crumbs = stack.map(s => s.title);
   if (e.kind === 'home') UI.showHome(e.data, crumbs);
   else if (e.kind === 'shelf') UI.showShelf(e.data, crumbs);
@@ -32,7 +38,7 @@ const app = {
       const p = parsePage(await fetchDoc(book.url), book.url);
       p.title = book.title || p.title;
       const e = { kind: p.kind === 'index' ? 'shelf' : 'read', title: p.title, data: p };
-      if (e.kind === 'read') { tts.load(p.paras); Progress.update(p, Progress.idx(p.url), p.paras.length); }   // vào danh sách "đang đọc"
+      if (e.kind === 'read') { tts.load(p.paras); Progress.update(p, Progress.idx(p.url), p.paras.length); Account.nudge(); }   // vào danh sách "đang đọc"
       stack.push(e); show(e);
     } catch (e) { UI.error(e.message, true); }
   },
