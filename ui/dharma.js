@@ -57,7 +57,7 @@ let buddhaG, cushion;
 })();
 
 /* ---------- trạng thái & HUD ---------- */
-let active = false, sitting = false, bowT = 0, T = 0, ctx = null, hud = null, paras = [], idx = 0, lines = [], cum = [], elapsed = 0, curLine = -1, timer = 0, base = 1, chant = false;
+let dragging = false, active = false, sitting = false, bowT = 0, T = 0, ctx = null, hud = null, paras = [], idx = 0, lines = [], cum = [], elapsed = 0, curLine = -1, timer = 0, base = 1, chant = false;
 const split = t => {
   const out = []; (t.match(/[^.!?;:]+[.!?;:]*\s*/g) || [t]).forEach(p => { p = p.trim(); while (p.length > 75) { let i = p.lastIndexOf(',', 75); if (i < 30) i = p.lastIndexOf(' ', 75); if (i < 20) i = 75; out.push(p.slice(0, i + 1).trim()); p = p.slice(i + 1).trim(); } if (p) out.push(p); });
   return out.length ? out : [t];
@@ -82,10 +82,15 @@ function mk() {
   const bowB = h('button', { textContent: '🙇 Cúi đầu', title: 'Phím B', onclick: () => Dharma.bow() });
   const sit = h('button', { onclick: () => Dharma.toggleSit() });
   const hint = h('div', { className: 'dh-hint', textContent: matchMedia('(pointer:coarse)').matches ? 'Đi tới chỗ bạn muốn rồi bấm “Ngồi nghe”' : 'Bấm “Ngồi nghe” (hoặc phím E) ở bất cứ chỗ nào · B để cúi đầu' });
+  const N = paras.length, sl = h('input', { type: 'range', min: 0, max: Math.max(0, N - 1), step: 1, value: idx, title: 'Tua tới đoạn',
+    oninput: e => { dragging = true; Dharma.setReading(+e.target.value); }, onchange: e => { dragging = false; ctx.app.seek(+e.target.value); } });
+  const num = h('input', { type: 'number', className: 'dh-num', min: 1, max: N, value: idx + 1, title: 'Nhập số đoạn rồi Enter', onchange: e => ctx.app.seek(+e.target.value - 1) });
+  const seek = h('div', { className: 'dh-seek' }, h('button', { textContent: '⏮', title: 'Đoạn trước', onclick: () => ctx.app.seek(idx - 1) }), sl, num, h('span', { textContent: '/ ' + N }),
+    h('button', { textContent: '⏭', title: 'Đoạn sau', onclick: () => ctx.app.seek(idx + 1) }));
   const bar = h('div', { className: 'dh-bar' }, play, h('button', { textContent: '■', onclick: () => tts.stop() }), '🐢',
     h('input', { type: 'range', min: .5, max: 2, step: .1, value: base, oninput: e => { base = +e.target.value; rate.textContent = base.toFixed(1) + 'x'; setRate(); } }), '🐇', rate, chantB, bowB, sit,
-    h('button', { textContent: '📖 Đọc bằng mắt', onclick: () => ctx.onClassic() }));
-  document.body.append(text, bar, hint); document.body.classList.add('dh-on'); hud = { text, bar, hint, sit, play };
+    h('button', { textContent: '📖 Đọc bằng mắt', onclick: () => ctx.onClassic() }), seek);
+  document.body.append(text, bar, hint); document.body.classList.add('dh-on'); hud = { text, bar, hint, sit, play, sl, num };
 }
 const canSit = () => { const { x, z } = camera.position; for (const o of OB) if (Math.hypot(x - o.x, z - o.z) < o.sit) return o.msg; return ''; };
 const setSeat = (x, z) => { sitting = true; sitPos.set(x, 1.0, z); cushion.position.set(x, .06, z); cushion.visible = true; };
@@ -100,7 +105,7 @@ export const Dharma = {
     mk(); this.setReading(idx); timer = setInterval(tick, 150);
   },
   exit() { if (!active) return; active = false; bowT = 0; clearInterval(timer); [hud.text, hud.bar, hud.hint].forEach(e => e.remove()); hud = null; document.body.classList.remove('dh-on'); },
-  setReading(i) { if (!active) return; idx = i; lines = split(paras[i] || ''); let c = 0; cum = lines.map(l => c += l.length); elapsed = 0; curLine = 0; render(); },
+  setReading(i) { if (!active) return; idx = i; lines = split(paras[i] || ''); let c = 0; cum = lines.map(l => c += l.length); elapsed = 0; curLine = 0; if (hud && !dragging) hud.sl.value = i; if (hud) hud.num.value = i + 1; render(); },
   setState(s) { if (hud) { hud.play.textContent = s === 'playing' ? '⏸ Tạm dừng' : s === 'paused' ? '▶ Tiếp tục' : '▶ Nghe'; render(); } },
   bow() { if (!active || bowT > 0) return; bowT = 1.8; toast('🙇 Bạn cúi đầu đảnh lễ'); },
   toggleSit() {                                                               // ngồi ở đâu cũng được, trừ chỗ cấm

@@ -12,6 +12,10 @@
 .dh-bar input[type=range]{width:90px}
 .dh-hint{position:fixed;z-index:5;top:38%;left:50%;transform:translateX(-50%);background:#000a;color:#fff7dc;padding:6px 14px;border-radius:20px;font:13px "Noto Serif","Times New Roman",serif;pointer-events:none;text-align:center;max-width:90vw;transition:opacity .5s}
 .dh-toast{position:fixed;z-index:8;top:28%;left:50%;transform:translateX(-50%);background:#000b;color:#ffe9a8;padding:8px 20px;border-radius:20px;font:15px "Noto Serif","Times New Roman",serif;pointer-events:none}
+/* thanh tua đoạn */
+.dh-seek{flex-basis:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.dh-seek input[type=range]{flex:1;max-width:460px;width:auto}
+.dh-num{width:66px;padding:5px;background:#1b1008;color:#fff;border:1px solid #8a6a3a;border-radius:6px;font:inherit;text-align:center}
 body.dh-on .help{display:none}
 body.ui-idle .dh-bar,body.ui-idle .dh-hint{opacity:0;pointer-events:none}
 @media(pointer:coarse){.dh-text{bottom:92px}}

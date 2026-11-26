@@ -10,7 +10,7 @@ const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = n
 const COLORS = ['#8b2e2e', '#2e5a8b', '#2e7a4f', '#7a4f2e', '#6a2e8b', '#8b6a2e', '#2e7a7a', '#5a2e3d', '#3d5a2e', '#4a4a7a'];
 const hash = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0);
 const h = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-let app, main, crumbsEl, musBtn, musName, reader, paraEls = [], playBtn;
+let app, main, crumbsEl, musBtn, musName, reader, paraEls = [], playBtn, seekUI = null, seekDrag = false;
 
 function shelf(title, books) {
   const s = h('div', { className: 'shelf' });
@@ -72,12 +72,19 @@ export const UI = {
       '🐢', h('input', { type: 'range', min: .5, max: 2, step: .1, value: 1, oninput: e => { rate.textContent = (+e.target.value).toFixed(1) + 'x'; app.tts.setRate(+e.target.value); } }), '🐇', rate,
       h('button', { textContent: 'A−', onclick: () => setFs(Math.max(14, fs - 2)) }), h('button', { textContent: 'A+', onclick: () => setFs(fs + 2) }),
       h('button', { textContent: '🌙', onclick: () => reader.classList.toggle('dark') }));
+    const N = d.paras.length, jump = i => { paraEls.forEach(p => p.classList.remove('on')); const p = paraEls[i]; if (p) { p.classList.add('on'); p.scrollIntoView({ block: 'center' }); } };
+    const sl = h('input', { type: 'range', min: 0, max: Math.max(0, N - 1), step: 1, value: start, title: 'Tua tới đoạn',
+      oninput: e => { seekDrag = true; num.value = +e.target.value + 1; jump(+e.target.value); }, onchange: e => { seekDrag = false; app.seek(+e.target.value); } });
+    const num = h('input', { type: 'number', className: 'rb-num', min: 1, max: N, value: start + 1, title: 'Nhập số đoạn rồi Enter', onchange: e => app.seek(+e.target.value - 1) });
+    bar.append(h('div', { className: 'rb-seek' }, h('button', { textContent: '⏮', onclick: () => app.seek(+num.value - 2) }), sl, num, h('span', { textContent: '/ ' + N }), h('button', { textContent: '⏭', onclick: () => app.seek(+num.value) })));
+    seekUI = { sl, num };
     closeReader(); reader = h('div', { className: 'rd' }, bar, h('div', { className: 'tx' }, body)); document.body.append(reader);
     if (start && paraEls[start]) { paraEls[start].classList.add('on'); setTimeout(() => paraEls[start].scrollIntoView({ block: 'center' }), 50); }
   },
   setReading(i) {
     paraEls.forEach(p => p.classList.remove('on'));
     const p = paraEls[i]; if (p) { p.classList.add('on'); p.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    if (seekUI) { if (!seekDrag) seekUI.sl.value = i; seekUI.num.value = i + 1; }
   },
   setTtsState(s) { if (playBtn) playBtn.textContent = s === 'playing' ? '⏸ Tạm dừng' : s === 'paused' ? '▶ Tiếp tục' : '▶ Đọc'; },
   setMusic(n, on) { if (musName) { musName.textContent = n; musBtn.textContent = on ? '⏸' : '♪'; } }

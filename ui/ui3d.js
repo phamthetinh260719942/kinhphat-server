@@ -144,7 +144,7 @@ function hover(m, e) {
   if (hoverM && hoverM !== m) hoverM.material[4].emissive.copy(hoverM.userData.base);
   hoverM = m; if (m) m.material[4].emissive.set(0x664411);
   tip.style.display = m ? 'block' : 'none'; renderer.domElement.style.cursor = m ? 'pointer' : 'grab';
-  if (m) { tip.textContent = m.userData.book.title; tip.style.left = e.clientX + 14 + 'px'; tip.style.top = e.clientY + 14 + 'px'; }
+  if (m) { tip.textContent = m.userData.book.full || m.userData.book.title; tip.style.left = e.clientX + 14 + 'px'; tip.style.top = e.clientY + 14 + 'px'; }
 }
 const key = (e, v) => { if (v && e.key.toLowerCase() === 'e' && Dharma.active) return Dharma.toggleSit(); if (v && e.key.toLowerCase() === 'b' && Dharma.active) return Dharma.bow(); const k = { w: 'w', a: 'a', s: 's', d: 'd', ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'a', ArrowRight: 'd' }[e.key.length > 1 ? e.key : e.key.toLowerCase()]; if (k && (running || Dharma.active)) keys[k] = v; };
 

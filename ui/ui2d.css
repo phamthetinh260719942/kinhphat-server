@@ -18,3 +18,7 @@ main{max-width:1100px;margin:0 auto;padding:10px 20px 40px}.msg{padding:40px;tex
 .tx h2{text-align:center;color:#8b2e2e}.rd.dark .tx h2{color:var(--gold)}
 .tx p{margin:0 0 1em;padding:2px 6px;border-radius:4px;cursor:pointer}.tx p.on{background:#e0b85a66}
 .src{text-align:center;font-size:.85rem;opacity:.7;padding:20px}
+
+.rb-seek{flex-basis:100%;display:flex;align-items:center;gap:8px}
+.rb-seek input[type=range]{flex:1;width:auto;max-width:none}
+.rb-num{width:66px;padding:5px;background:#1b1008;color:#fff;border:1px solid #8a6a3a;border-radius:6px;font:inherit;text-align:center}
