@@ -35,12 +35,18 @@ const app = {
   async open(book) {
     tts.stop(); UI.loading('Đang mở “' + book.title + '”…');
     try {
-      const p = parsePage(await fetchDoc(book.url), book.url);
-      p.title = book.title || p.title;
+      const p = parsePage(await fetchDoc(book.url), book.url, book.full || book.title);
+      p.title = book.full || book.title || p.title;
       const e = { kind: p.kind === 'index' ? 'shelf' : 'read', title: p.title, data: p };
       if (e.kind === 'read') { tts.load(p.paras); Progress.update(p, Progress.idx(p.url), p.paras.length); Account.nudge(); }   // vào danh sách "đang đọc"
       stack.push(e); show(e);
     } catch (e) { UI.error(e.message, true); }
+  },
+  seek(i) {                                    // tua tới đoạn i (đang đọc thì đọc tiếp từ đoạn đó)
+    const e = stack.at(-1); if (e?.kind !== 'read') return;
+    const n = e.data.paras.length; i = Math.max(0, Math.min(n - 1, Math.round(+i) || 0));
+    if (tts.state === 'playing') tts.play(i);
+    else { if (tts.state === 'paused') tts.stop(); tts.idx = i; UI.setReading(i); Progress.update(e.data, i, n); }
   },
   back() { if (stack.length < 2) return; tts.stop(); stack.pop(); show(stack.at(-1)); },
   jump(n) { while (stack.length > n + 1) stack.pop(); tts.stop(); show(stack.at(-1)); }

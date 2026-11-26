@@ -12,15 +12,37 @@ export async function fetchDoc(url) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   cache.set(url, doc); return doc;
 }
-function linksOf(root, base) {
-  const seen = new Set(), out = [];
+const TOKEN = /^[\(\[]?\s*(\d+[a-z]?|\*)\s*[\)\]]?\.?$/i, INLINE = /^(B|I|STRONG|EM|FONT|SPAN|U|SUP|SMALL)$/, BLOCK = /^(UL|OL|TABLE|P|DIV|LI|TR|TD|H\d)$/;
+function textAfter(a) {                              // chữ đứng sau liên kết trên cùng một dòng (tới <br> hoặc liên kết kế tiếp)
+  let out = '';
+  for (let cur = a; cur; cur = cur.parentElement) {
+    for (let n = cur.nextSibling; n; n = n.nextSibling) {
+      if (n.nodeType === 1 && (n.tagName === 'BR' || n.tagName === 'A' || BLOCK.test(n.tagName) || n.querySelector('a'))) return out;
+      out += n.textContent;
+    }
+    if (!INLINE.test(cur.parentElement?.tagName || '')) break;
+  }
+  return out;
+}
+// Liên kết chỉ là số "(01)" -> lấy tên kinh đứng sau; thiếu tên thì dùng "Tên bộ - 01". full = tên đầy đủ kèm tên bộ.
+function nameOf(a, t, series) {
+  const m = t.match(TOKEN); if (!m) return { title: t };
+  const num = m[1] === '*' ? '' : m[1];
+  let ctx = clean(textAfter(a)).replace(/^[-–.:\s]+/, '').replace(/\s*\(a\)\s*$/i, '').trim();
+  if (!ctx) { const nx = a.closest('td')?.nextElementSibling; if (nx && !nx.querySelector('a')) ctx = clean(nx.textContent); }
+  const label = num || t;
+  if (ctx) { const title = num ? `${num}. ${ctx}` : ctx; return { title, full: series ? `${series} - ${title}` : title }; }
+  const title = series ? `${series} - ${label}` : label; return { title, full: title };
+}
+function linksOf(root, base, series) {
+  const seen = new Set(), out = [], self = base.split('#')[0];
   root.querySelectorAll('a[href]').forEach(a => {
     let u; try { u = new URL(a.getAttribute('href'), base).href.split('#')[0]; } catch { return; }
     u = u.replace(/^https?:\/\/(www\.)?budsas\.net/, ORIGIN);
     const t = clean(a.textContent);
-    if (!u.startsWith(ORIGIN) || t.length < 2 || seen.has(u) || u.endsWith('/uni/index.htm')) return;
-    if (/^(trở về|home|quay về|lên đầu)/i.test(t)) return;
-    seen.add(u); out.push({ title: t, url: u });
+    if (!u.startsWith(ORIGIN) || !t || seen.has(u) || u === self || u.endsWith('/uni/index.htm')) return;
+    if (/^[\(\[]?[^\d\s*][\)\]]?$/.test(t) || /^(trở về|home|quay về|lên đầu)/i.test(t)) return;     // bỏ "(a)" (bản Anh ngữ) và các nút điều hướng
+    seen.add(u); out.push({ url: u, ...nameOf(a, t, series) });
   });
   return out;
 }
@@ -55,9 +77,9 @@ export function parseHome(doc, url) {
   return [...map].map(([title, books]) => ({ title, books }));
 }
 // Trang con -> {kind:'index', title, books} hoặc {kind:'text', title, paras, url}
-export function parsePage(doc, url) {
+export function parsePage(doc, url, series) {
   const title = clean(doc.querySelector('title')?.textContent || 'Không tên');
-  const links = linksOf(doc.body, url);
+  const links = linksOf(doc.body, url, series);
   const len = clean(doc.body.textContent).length;
   if (links.length >= 8 && len < links.length * 350) return { kind: 'index', title, books: links, url };
   const b = doc.body.cloneNode(true);
