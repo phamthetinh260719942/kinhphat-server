@@ -38,7 +38,7 @@ const app = {
       const p = parsePage(await fetchDoc(book.url), book.url, book.full || book.title);
       p.title = book.full || book.title || p.title;
       const e = { kind: p.kind === 'index' ? 'shelf' : 'read', title: p.title, data: p };
-      if (e.kind === 'read') { tts.load(p.paras); Progress.update(p, Progress.idx(p.url), p.paras.length); Account.nudge(); }   // vào danh sách "đang đọc"
+      if (e.kind === 'read') { tts.load(p.paras, p.title); Progress.update(p, Progress.idx(p.url), p.paras.length); Account.nudge(); }   // vào danh sách "đang đọc"
       stack.push(e); show(e);
     } catch (e) { UI.error(e.message, true); }
   },

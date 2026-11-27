@@ -4,6 +4,24 @@ let voice = null, token = 0, warned = false, srcIdx = 0;   // srcIdx 0 = server 
 const pick = () => { voice = speechSynthesis.getVoices().find(v => /^vi/i.test(v.lang)) || null; };
 speechSynthesis.onvoiceschanged = pick; pick();
 const ra = new Audio();
+
+/* Giữ nền: khi đang đọc thì phát ngầm một đoạn âm thanh gần như im lặng (lặp lại), để Android coi trang là "đang phát nhạc"
+   và không cắt giọng đọc khi tắt màn hình (giống như khi bật nhạc nền). Tai không nghe thấy. */
+const keep = (() => {
+  const sr = 8000, n = sr * 2, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.round(Math.random() * 4 - 2), true);   // nhiễu cực nhỏ (không phải im lặng tuyệt đối, để trình duyệt không bỏ qua)
+  const a = new Audio(URL.createObjectURL(new Blob([b], { type: 'audio/wav' }))); a.loop = true; a.volume = 0.05; return a;
+})();
+
+/* Sửa chữ trước khi đọc (chữ hiển thị trên màn hình giữ nguyên) */
+const speakable = t => t.normalize('NFC')
+  .replace(/Ð/g, 'Đ').replace(/ð/g, 'đ')                                 // budsas.net hay dùng chữ Ð (eth) thay cho Đ -> máy đọc thành "d"
+  .replace(/(^|[.!?:;…"“'‘(\[]\s*)[-–—―•]+\s*/g, '$1')                    // gạch đầu câu thoại "- Thưa đại vương" -> bỏ gạch; "Sa - môn" giữ nguyên
+  .replace(/(?<![\p{L}\p{M}])([yY])(?![\p{L}\p{M}])/gu, (_, y) => y === 'Y' ? 'I' : 'i');  // "y" đứng một mình (y phục, quy y) -> "i", tránh đọc "i dài"
+
 const split = t => {                      // đoạn <= 180 ký tự (giới hạn ~200 của endpoint Google)
   const parts = t.match(/[^.!?;:]+[.!?;:]*\s*/g) || [t], out = []; let cur = '';
   const push = s => { s = s.trim(); if (s) out.push(s); };
@@ -12,23 +30,36 @@ const split = t => {                      // đoạn <= 180 ký tự (giới h�
     if ((cur + p).length > 180) { push(cur); cur = p; } else cur += p;
   }); push(cur); return out;
 };
+
+/* Màn hình khóa / thanh thông báo: tên kinh + nút điều khiển */
+const ms = navigator.mediaSession;
+function meta(t) {
+  if (!ms || typeof MediaMetadata === 'undefined') return;
+  try { ms.metadata = new MediaMetadata({ title: t.title || 'Thư Viện Kinh', artist: `Đoạn ${t.idx + 1}/${t.paras.length}`, album: 'Thư Viện Kinh' }); } catch {}
+}
+
 export const tts = {
-  paras: [], idx: 0, rate: 1, gap: 0, state: 'stop', onPara() {}, onState() {},
+  paras: [], idx: 0, rate: 1, gap: 0, state: 'stop', title: '', onPara() {}, onState() {},
   hasVoice: () => true,
   get mode() { return voice ? 'Giọng trình duyệt' : 'Giọng Google Dịch'; },
-  load(p) { this.stop(); this.paras = p; },
-  _set(s) { this.state = s; this.onState(s); },
+  load(p, title = '') { this.stop(); this.paras = p; this.title = title; },
+  _set(s) {
+    this.state = s;
+    if (s === 'playing') keep.play().catch(() => {}); else keep.pause();
+    if (ms) { try { ms.playbackState = s === 'playing' ? 'playing' : s === 'paused' ? 'paused' : 'none'; } catch {} if (s !== 'stop') meta(this); }
+    this.onState(s);
+  },
   _fail(my) {
     if (my !== token) return; this.stop();
     if (!warned) { warned = true; alert('Không phát được giọng đọc. Máy chưa có giọng tiếng Việt và giọng Google bị chặn. Hãy dùng Microsoft Edge hoặc cài giọng Vietnamese trong Cài đặt Windows > Time & language > Speech.'); }
   },
   play(i = this.idx) {
-    speechSynthesis.cancel(); ra.pause(); const my = ++token; this.idx = i; this._set('playing');
+    speechSynthesis.cancel(); ra.pause(); const my = ++token; this.idx = Math.max(0, Math.min(i, this.paras.length - 1)); this._set('playing');
     const next = () => {
       if (my !== token) return;
       if (this.idx >= this.paras.length) return this.stop();
-      this.onPara(this.idx);
-      const cs = split(this.paras[this.idx]);
+      this.onPara(this.idx); meta(this);
+      const cs = split(speakable(this.paras[this.idx]));
       const run = k => {
         if (my !== token) return;
         if (k >= cs.length) { this.idx++; return this.gap ? setTimeout(next, this.gap) : next(); }
@@ -55,3 +86,12 @@ export const tts = {
   stop() { token++; speechSynthesis.cancel(); ra.pause(); this._set('stop'); },
   setRate(r) { this.rate = r; ra.defaultPlaybackRate = ra.playbackRate = r; if (this.state === 'playing' && voice) this.play(this.idx); }
 };
+
+if (ms) {
+  const on = (a, f) => { try { ms.setActionHandler(a, f); } catch {} };
+  on('play', () => tts.state === 'paused' ? tts.resume() : tts.play());
+  on('pause', () => tts.pause());
+  on('stop', () => tts.stop());
+  on('previoustrack', () => tts.play(tts.idx - 1));
+  on('nexttrack', () => tts.play(tts.idx + 1));
+}
