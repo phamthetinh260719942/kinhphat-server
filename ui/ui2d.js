@@ -41,7 +41,7 @@ export const UI = {
     document.getElementById('app').append(
       h('div', { className: 'hd' }, h('h1', { textContent: '📿 Thư Viện Kinh', onclick: () => app.home() }),
         h('div', { className: 'mus' }, musBtn, h('button', { textContent: '⏭', onclick: () => app.music.next() }), musName,
-          h('input', { type: 'range', min: 0, max: 1, step: .05, value: .4, oninput: e => app.music.setVolume(+e.target.value) }))),
+          h('input', { type: 'range', min: 0, max: 1, step: .05, value: app.music.volume, title: 'Âm lượng nhạc nền', oninput: e => app.music.setVolume(+e.target.value) }))),
       crumbsEl, main);
   },
   loading(m) { main.replaceChildren(h('div', { className: 'msg', textContent: m })); },

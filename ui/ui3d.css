@@ -11,6 +11,18 @@
 .mv{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:4;display:none;gap:10px;transition:opacity .5s}
 .mv button{width:58px;height:58px;font-size:22px;background:#6b4423dd;color:#f6ecd6;border:1px solid #e0b85a;border-radius:12px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 @media(pointer:coarse){.mv{display:flex}}
-@media(max-width:700px){.crumbs3d a{display:none}.musbox span,.musbox input{display:none}}
+@media(max-width:700px){.crumbs3d a{display:none}}
+/* Nhạc nền: tên bài + thanh âm lượng. Trên điện thoại ẩn đi, bấm 🔉 để mở */
+.mus-pop{display:flex;gap:6px;align-items:center}
+.mus-name{max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px}
+.mus-pop input{width:80px}.mus-pct{font-size:12px;min-width:34px}
+.mus-volbtn{display:none}
+@media(max-width:700px){
+  .mus-volbtn{display:inline-block}
+  .mus-pop{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#2b1409ee;border:1px solid #e0b85a;border-radius:10px;padding:10px 12px;flex-wrap:wrap;width:230px}
+  .musbox.open .mus-pop{display:flex}
+  .mus-pop .mus-name{flex-basis:100%;max-width:none}
+  .mus-pop input{flex:1;height:28px}
+}
 /* 5 giây không thao tác thì ẩn nút; chạm hoặc lướt lại là hiện */
 body.ui-idle .hud,body.ui-idle .mv{opacity:0;pointer-events:none}

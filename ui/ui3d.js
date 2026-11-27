@@ -169,9 +169,14 @@ function initHud() {
   tip = h('div', { id: 'tip' }); ov = h('div', { id: 'ov' });
   crumbsEl = h('div', { className: 'hud crumbs3d' });
   musBtn = h('button', { textContent: '♪', onclick: () => { if (!app.music.toggle()) alert('Chưa có nhạc. Bỏ mp3 vào thư mục music/ và khai báo trong music/list.json'); } });
-  musName = h('span', { textContent: 'Chưa có nhạc', style: 'max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px' });
-  const mus = h('div', { className: 'hud musbox' }, musBtn, h('button', { textContent: '⏭', onclick: () => app.music.next() }), musName,
-    h('input', { type: 'range', min: 0, max: 1, step: .05, value: .4, style: 'width:70px', oninput: e => app.music.setVolume(+e.target.value) }));
+  musName = h('span', { className: 'mus-name', textContent: 'Chưa có nhạc' });
+  const volTxt = h('span', { className: 'mus-pct', textContent: Math.round(app.music.volume * 100) + '%' });
+  const pop = h('div', { className: 'mus-pop' }, musName, h('span', { textContent: '🔈' }),
+    h('input', { type: 'range', min: 0, max: 1, step: .05, value: app.music.volume, title: 'Âm lượng nhạc nền (0 = tắt, chỉ nghe lời đọc)',
+      oninput: e => { app.music.setVolume(+e.target.value); volTxt.textContent = Math.round(+e.target.value * 100) + '%'; } }), volTxt);
+  const mus = h('div', { className: 'hud musbox' }, musBtn, h('button', { textContent: '⏭', onclick: () => app.music.next() }),
+    h('button', { className: 'mus-volbtn', textContent: '🔉', title: 'Âm lượng nhạc nền', onclick: e => { e.stopPropagation(); mus.classList.toggle('open'); } }), pop);
+  addEventListener('pointerdown', e => { if (!mus.contains(e.target)) mus.classList.remove('open'); });
   const hold = (txt, k) => { const b = h('button', { textContent: txt, oncontextmenu: e => e.preventDefault() });
     b.onpointerdown = e => { e.preventDefault(); e.stopPropagation(); keys[k] = true; b.setPointerCapture?.(e.pointerId); };
     b.onpointerup = b.onpointercancel = b.onlostpointercapture = () => { keys[k] = false; }; return b; };
