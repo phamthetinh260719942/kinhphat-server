@@ -2,7 +2,7 @@
 export const ORIGIN = 'https://budsas.net';
 const PROXY = '/b';                       // Render rewrite: /b/* -> https://budsas.net/*
 const cache = new Map();
-const clean = s => s.replace(/\s+/g, ' ').trim();
+const clean = s => s.normalize('NFC').replace(/Ð/g, 'Đ').replace(/ð/g, 'đ').replace(/[\u200b-\u200d\ufeff]/g, '').replace(/\s+/g, ' ').trim();   // Ð (eth) trên budsas -> Đ
 
 export async function fetchDoc(url) {
   if (cache.has(url)) return cache.get(url);
@@ -90,5 +90,7 @@ export function parsePage(doc, url, series) {
   b.querySelectorAll('p,div,tr,li,h1,h2,h3,h4,h5,h6,blockquote,center').forEach(e => { e.prepend('\n'); e.append('\n'); });
   const paras = b.textContent.split(/\n+/).map(clean)
     .filter(p => p.length > 1 && !/Home Page|Unicode Times|^BuddhaSasana/.test(p));
-  return { kind: 'text', title, paras, url };
+  // tên kinh ghi ở đầu trang (vd "2. Kinh Sa-môn quả") và tên bộ lấy từ liên kết "Mục lục Trường Bộ Kinh"
+  const head = clean(doc.body.querySelector('h1,h2,h3')?.textContent || ''), ml = links.map(l => clean(l.title)).find(t => /^mục lục\s+\S/i.test(t));
+  return { kind: 'text', title, paras, url, head: head.length < 150 ? head : '', series: ml ? ml.replace(/^mục lục\s+/i, '') : '' };
 }

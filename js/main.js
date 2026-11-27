@@ -7,6 +7,7 @@ import { music } from './music.js';
 import { Progress } from './progress.js';
 
 const HOME = ORIGIN + '/uni/index.htm';
+const weak = t => !/\p{L}{2}/u.test(String(t || '').split(' - ').pop());   // phần tên sau dấu " - " không có chữ (chỉ là số)
 const stack = [];                              // {kind:'home'|'shelf'|'read', title, data}
 
 function mark(e) {                            // gắn trạng thái đã/đang đọc cho từng sách để vẽ quầng sáng
@@ -37,6 +38,10 @@ const app = {
     try {
       const p = parsePage(await fetchDoc(book.url), book.url, book.full || book.title);
       p.title = book.full || book.title || p.title;
+      if (p.kind === 'text' && weak(p.title) && p.head) {        // tên chỉ là số "(02)" / "Kinh Trường Bộ - 02" -> lấy tên ghi trong trang
+        const s = p.series || (stack.at(-1)?.kind === 'shelf' ? stack.at(-1).title : '');
+        p.title = s && !p.head.toLowerCase().includes(s.toLowerCase()) ? `${s} - ${p.head}` : p.head;
+      }
       const e = { kind: p.kind === 'index' ? 'shelf' : 'read', title: p.title, data: p };
       if (e.kind === 'read') { tts.load(p.paras, p.title); Progress.update(p, Progress.idx(p.url), p.paras.length); Account.nudge(); }   // vào danh sách "đang đọc"
       stack.push(e); show(e);
